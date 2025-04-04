@@ -1,0 +1,128 @@
+[
+    {
+        "competition": {
+            "id": "11678489",
+            "name": "ICC World Twenty20"
+        },
+        "marketCount": 1,
+        "competitionRegion": "AUS",
+        "sport": "cricket"
+    },
+    {
+        "competition": {
+            "id": "11365612",
+            "name": "Test Matches"
+        },
+        "marketCount": 4,
+        "competitionRegion": "International",
+        "sport": "cricket"
+    },
+    {
+        "competition": {
+            "id": "12294864",
+            "name": "Rachael Heyhoe Flint Trophy"
+        },
+        "marketCount": 16,
+        "competitionRegion": "GBR",
+        "sport": "cricket"
+    },
+    {
+        "competition": {
+            "id": "101480",
+            "name": "Indian Premier League"
+        },
+        "marketCount": 52,
+        "competitionRegion": "GBR",
+        "sport": "cricket"
+    },
+    {
+        "competition": {
+            "id": "9886504",
+            "name": "Womens One Day Internationals"
+        },
+        "marketCount": 26,
+        "competitionRegion": "International",
+        "sport": "cricket"
+    },
+    {
+        "competition": {
+            "id": "12249142",
+            "name": "ICC Cricket World Cup 2023"
+        },
+        "marketCount": 1,
+        "competitionRegion": "GBR",
+        "sport": "cricket"
+    },
+    {
+        "competition": {
+            "id": "1234567890",
+            "name": "Demo New Series"
+        },
+        "marketCount": 1,
+        "competitionRegion": "IN",
+        "sport": "cricket"
+    },
+    {
+        "competition": {
+            "id": "123456789",
+            "name": "New Demo Series"
+        },
+        "marketCount": 1,
+        "competitionRegion": "IN",
+        "sport": "cricket"
+    },
+    {
+        "competition": {
+            "id": "12351359",
+            "name": "The Hundred - Womens"
+        },
+        "marketCount": 1,
+        "competitionRegion": "GBR",
+        "sport": "cricket"
+    },
+    {
+        "competition": {
+            "id": "12444379",
+            "name": "The Ashes"
+        },
+        "marketCount": 2,
+        "competitionRegion": "AUS",
+        "sport": "cricket"
+    },
+    {
+        "competition": {
+            "id": "12571212",
+            "name": "County Championship Division 1"
+        },
+        "marketCount": 10,
+        "competitionRegion": "GBR",
+        "sport": "cricket"
+    },
+    {
+        "competition": {
+            "id": "12571214",
+            "name": "County Championship Division 2"
+        },
+        "marketCount": 6,
+        "competitionRegion": "GBR",
+        "sport": "cricket"
+    },
+    {
+        "competition": {
+            "id": "12596293",
+            "name": "Major League Cricket"
+        },
+        "marketCount": 15,
+        "competitionRegion": "GBR",
+        "sport": "cricket"
+    },
+    {
+        "competition": {
+            "id": "11045255",
+            "name": "ACC Emerging Teams Cup"
+        },
+        "marketCount": 30,
+        "competitionRegion": "GBR",
+        "sport": "cricket"
+    }
+]
