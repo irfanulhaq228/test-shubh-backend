@@ -16,6 +16,7 @@ yarn-error.log
 .env.test.local
 .env.production.local
 .env.local
+shubh-exchange-firebase-adminsdk-yz7br-c87d157ac7.json
 
 # Build outputs
 dist/

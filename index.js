@@ -20,6 +20,7 @@ const SuperAdminRouter = require("./Routes/SuperAdminRoutes.js");
 
 const checkDomain = require("./middleware.js");
 const BonusRouter = require("./Routes/BonusRoutes.js");
+const SportsApiRouter = require("./SportsApi/sportsApisRouter.js");
 
 dotenv.config();
 
@@ -49,7 +50,7 @@ app.use('/uploads', express.static('uploads'));
 db;
 
 app.get("/", (req, res) => {
-    res.json({ message: "Backend is running correctly!!!" });
+    res.json({ message: "TEST Backend is running correctly!!!" });
 });
 
 // app.use("/user", checkDomain, checkMarketData, UserRouter);
@@ -90,6 +91,8 @@ app.use("/bet", checkDomain, BetRouter);
 app.use("/ledger", checkDomain, LedgerRouter);
 app.use("/bonus", checkDomain, BonusRouter);
 
+app.use("/new", SportsApiRouter);
+
 app.post("/test-payment-gateway", async (req, res) => {
     try {
         console.log("================================");
@@ -100,51 +103,8 @@ app.post("/test-payment-gateway", async (req, res) => {
     }
 });
 
-app.use("/redis", REDIS.REDIS);
+// app.use("/redis", REDIS.REDIS);
 
 app.listen(process.env.PORT, () => {
     console.log(`Server runs at port ${process.env.PORT}`);
-    setInterval(async () => {
-        try {
-            await REDIS.getEvents();
-            // console.log('Updated events data');
-        } catch (error) {
-            console.error('Error updating events data:', error.message);
-        }
-    }, 60 * 1000);
-    setInterval(async () => {
-        try {
-            await REDIS.updateBets();
-            // console.log('Bets updated successfully');
-        } catch (error) {
-            console.error('Error updating bets:', error.message);
-        }
-    }, 60 * 1000);
-    // manual fancy bets result
-    setInterval(async () => {
-        try {
-            await REDIS.updateOtherBets();
-            // console.log('Other Bets updated successfully');
-        } catch (error) {
-            console.error('Error updating bets:', error.message);
-        }
-    }, 2000);
-    // manual bookmaker bets
-    setInterval(async () => {
-        try {
-            await REDIS.updateBookmakerBets();
-            // console.log('Other Bets updated successfully');
-        } catch (error) {
-            console.error('Error updating bets:', error.message);
-        }
-    }, 2000);
-    setInterval(async () => {
-        try {
-            await REDIS.extraMarketsResult();
-        } catch (error) {
-            console.error('Error updating extra market results:', error.message);
-        }
-    }, 60000);
-    // }, 1000);
-    // REDIS.extraMarketsResult();
 });
