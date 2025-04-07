@@ -21,6 +21,7 @@ const SuperAdminRouter = require("./Routes/SuperAdminRoutes.js");
 const checkDomain = require("./middleware.js");
 const BonusRouter = require("./Routes/BonusRoutes.js");
 const SportsApiRouter = require("./SportsApi/sportsApisRouter.js");
+const { fn_storeEvents } = require("./SportsApi/sportsApis.js");
 
 dotenv.config();
 
@@ -107,4 +108,8 @@ app.post("/test-payment-gateway", async (req, res) => {
 
 app.listen(process.env.PORT, () => {
     console.log(`Server runs at port ${process.env.PORT}`);
+    setInterval(() => {
+        console.log("Running scheduled fn_storeEvents...");
+        fn_storeEvents().catch(err => console.error("Scheduled fn_storeEvents error:", err));
+    }, 60 * 1000);
 });
