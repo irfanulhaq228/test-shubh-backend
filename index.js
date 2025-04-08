@@ -104,7 +104,7 @@ app.post("/test-payment-gateway", async (req, res) => {
     }
 });
 
-// app.use("/redis", REDIS.REDIS);
+app.use("/redis", REDIS.REDIS);
 
 app.listen(process.env.PORT, () => {
     console.log(`Server runs at port ${process.env.PORT}`);

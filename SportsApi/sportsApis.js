@@ -1,5 +1,7 @@
+const fs = require('fs');
 const redis = require('redis');
 const { default: axios } = require('axios');
+const gameModel = require('../Models/GameModel');
 const EventModel = require('../Models/EventsModel');
 
 const redisClient = redis.createClient({
@@ -44,20 +46,6 @@ const fn_getEvents = async (req, res) => {
     } catch (error) {
         console.error("getEvents error:", error);
         return res.status(500).json({ message: "Internal Server Error", error: error.message });
-    }
-};
-
-const fn_getBetDataApi = async (req, res) => {
-    try {
-        const { marketIds } = req.query;
-        if (!marketIds) return res.status(400).json({ message: "No Market Id Found" });
-        console.log("Market Ids ==> ", marketIds);
-
-        const response = await axios.get(`https://api.trovetown.co/v1/apiCalls/betfairData?marketIds=${marketIds}`);
-        return res.status(200).json(response?.data);
-    } catch (error) {
-        console.log("error ====> ", error);
-        return res.status(500).json({ message: "Failed to fetch betfair data", error: error });
     }
 };
 
@@ -116,9 +104,84 @@ const fn_storeEvents = async () => {
     }
 };
 
+const fn_getAdminGames = async (req, res) => {
+    try {
+        const adminId = req.adminId;
+        const data = JSON.parse(fs.readFileSync('./JSON_DATA/games_list.json', 'utf8'));
+
+        const adminGames = await gameModel.find({
+            disabled: false,
+            admins: { $elemMatch: { admin: adminId, status: true } },
+        });
+
+        const updatedGames = data.filter((game) => adminGames.some((adminGame) => adminGame.name.toLowerCase() == game.game.toLowerCase())).map((game) => {
+            const matchingAdminGame = adminGames.find(
+                (adminGame) => adminGame.name.toLowerCase() === game.game.toLowerCase()
+            );
+            return {
+                ...game,
+                image: matchingAdminGame?.image || null,
+            };
+        });
+
+        await redisClient.set('gamesData', JSON.stringify(updatedGames));
+
+        res.status(200).json({ message: "Data Direct Gets", data: updatedGames });
+    } catch (err) {
+        console.error("Error storing data in Redis:", err);
+        res.status(500).json({ message: "Error storing data" });
+    }
+};
+
+const fn_getMarkets = async (req, res) => {
+    try {
+        const { eventId, sportId } = req.query;
+        if (!eventId || !sportId || eventId === "" || sportId === "") return res.status(400).json({ message: "No event id or sport id" });
+
+        const response = await axios.get(`https://api.trovetown.co/v1/apiCalls?apiType=matchListManish&sportId=${sportId}`);
+        if (!response) return res.status(400).json({ message: "No Sport Found" });
+
+        const event = response?.data?.find((e) => e?.eventId == eventId);
+        if (!event) return res.status(400).json({ message: "No Market Found of this Event" });
+
+        const formattedMarketIds = event?.markets?.map(m => m.marketId).join(',');
+
+        return res.status(200).json({
+            eventId: event?.eventId,
+            eventName: event?.eventName,
+            competitionName: event?.competitionName,
+            competitionId: event?.competitionId,
+            sportId: event?.sportId,
+            sportName: event?.sportName?.toLowerCase(),
+            markets: event?.markets,
+            formattedMarketIds: formattedMarketIds,
+            date: event?.date || event?.openDate
+        });
+
+    } catch (error) {
+        console.log("error while getting markets", error);
+        res.status(500).json({ message: "Error storing data" });
+    }
+};
+
+const fn_getBetDataApi = async (req, res) => {
+    try {
+        const { marketIds } = req.query;
+        if (!marketIds) return res.status(400).json({ message: "No Market Id Found" });
+
+        const response = await axios.get(`https://api.trovetown.co/v1/apiCalls/betfairData?marketIds=${marketIds}`);
+        return res.status(200).json(response?.data);
+    } catch (error) {
+        console.log("error ====> ", error);
+        return res.status(500).json({ message: "Failed to fetch betfair data", error: error });
+    }
+};
+
 module.exports = {
     fn_getAllMatchesApi,
     fn_getEvents,
     fn_getBetDataApi,
-    fn_storeEvents
+    fn_storeEvents,
+    fn_getAdminGames,
+    fn_getMarkets
 };
