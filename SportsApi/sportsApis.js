@@ -170,13 +170,51 @@ const fn_getBetDataApi = async (req, res) => {
         if (!marketIds) return res.status(400).json({ message: "No Market Id Found" });
 
         const response = await axios.get(`https://api.trovetown.co/v1/apiCalls/betfairData?marketIds=${marketIds}`);
-        console.log("res ", res?.data || []);
-        console.log("===========================================================================================");
         return res.status(200).json(response?.data || []);
     } catch (error) {
         console.log("error ====> ", error?.response?.data);
-        console.log("===========================================================================================");
         return res.status(500).json({ message: "Failed to fetch betfair data", error: error });
+    }
+};
+
+const fn_getInPlayEvents = async (req, res) => {
+    try {
+        const { sportId } = req.query;
+        if (!sportId) return res.status(400).json({ message: "No Sport ID Found" });
+
+        const cachedData = await redisClient.get("new_api_events");
+        if (!cachedData) {
+            return res.status(404).json({ message: "No cached events found. Please run /store-events first." });
+        }
+
+        const parsedData = JSON.parse(cachedData);
+        const sportData = parsedData.find(sport => sport.sportId === sportId);
+        if (!sportData) return res.status(404).json({ message: "No events found for the given Sport ID" });
+
+        const currentDateTime = new Date();
+        const formattedCompetitions = [];
+
+        sportData.competitions.forEach(competition => {
+            const filteredEvents = competition.events.filter(event => {
+                const eventDateTime = new Date(event.date);
+                const normalizedEventName = event.eventName.replace(/\s+/g, '').toLowerCase();
+                const normalizedCompetitionName = competition.competitionName.replace(/\s+/g, '').toLowerCase();
+                return eventDateTime <= currentDateTime && normalizedEventName !== normalizedCompetitionName;
+            });
+
+            if (filteredEvents.length > 0) {
+                formattedCompetitions.push({
+                    competitionName: competition.competitionName,
+                    competitionId: competition.competitionId,
+                    events: filteredEvents
+                });
+            }
+        });
+
+        return res.status(200).json({ sportId, competitions: formattedCompetitions });
+    } catch (error) {
+        console.error("Error in fn_getFilteredEvents:", error);
+        return res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 };
 
@@ -186,5 +224,6 @@ module.exports = {
     fn_getBetDataApi,
     fn_storeEvents,
     fn_getAdminGames,
-    fn_getMarkets
+    fn_getMarkets,
+    fn_getInPlayEvents
 };
