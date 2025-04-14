@@ -76,10 +76,20 @@ const fn_storeEvents = async () => {
                 const competition = competitionMap.get(item.competitionId);
                 const isDuplicate = competition.events.some(e => e.eventId === item.eventId);
                 if (!isDuplicate) {
+                    let matchOddMarketId = null;
+
+                    if (item.markets && Array.isArray(item.markets)) {
+                        const matchOddsMarket = item.markets.find(market => market.marketName === "Match Odds");
+                        if (matchOddsMarket) {
+                            matchOddMarketId = matchOddsMarket.marketId;
+                        }
+                    }
+
                     competition.events.push({
                         eventId: item.eventId,
                         eventName: item.eventName,
-                        date: item.openDate
+                        date: item.openDate,
+                        matchOddMarketId: matchOddMarketId
                     });
                 }
             });
@@ -96,11 +106,8 @@ const fn_storeEvents = async () => {
 
         await redisClient.set("new_api_events", JSON.stringify(finalFormattedData), { EX: 3600 });
 
-        // return res.status(200).json({ message: "Events saved to DB and Redis." });
-
     } catch (error) {
         console.error("storeEvents error:", error);
-        // return res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 };
 
