@@ -170,9 +170,12 @@ const fn_getBetDataApi = async (req, res) => {
         if (!marketIds) return res.status(400).json({ message: "No Market Id Found" });
 
         const response = await axios.get(`https://api.trovetown.co/v1/apiCalls/betfairData?marketIds=${marketIds}`);
-        return res.status(200).json(response?.data);
+        console.log("res ", res?.data || []);
+        console.log("===========================================================================================");
+        return res.status(200).json(response?.data || []);
     } catch (error) {
-        console.log("error ====> ", error);
+        console.log("error ====> ", error?.response?.data);
+        console.log("===========================================================================================");
         return res.status(500).json({ message: "Failed to fetch betfair data", error: error });
     }
 };
