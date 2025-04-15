@@ -89,7 +89,8 @@ const fn_storeEvents = async () => {
                         eventId: item.eventId,
                         eventName: item.eventName,
                         date: item.openDate,
-                        matchOddMarketId: matchOddMarketId
+                        matchOddMarketId: matchOddMarketId,
+                        eventTypeId: sport.id
                     });
                 }
             });
