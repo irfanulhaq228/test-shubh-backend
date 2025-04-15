@@ -69,112 +69,112 @@ const createBets = async (req, res) => {
                 selectionName: bet?.selectionName?.toLowerCase() || ""
             }));
 
-            const singleBet = bets?.[0];
+            // const singleBet = bets?.[0];
 
-            let currentlyDataString = "";
+            // let currentlyDataString = "";
 
-            if (!singleBet?.marketId.includes("-")) {
-                currentlyDataString = await redisClient?.get(`ODDS_${singleBet?.marketId}`);
-            } else {
-                const eId = singleBet?.eventId;
-                currentlyDataString = await redisClient?.get(`d_${eId}`);
-            };
+            // if (!singleBet?.marketId.includes("-")) {
+            //     currentlyDataString = await redisClient?.get(`ODDS_${singleBet?.marketId}`);
+            // } else {
+            //     const eId = singleBet?.eventId;
+            //     currentlyDataString = await redisClient?.get(`d_${eId}`);
+            // };
 
-            const currentlyData = JSON.parse(currentlyDataString);
+            // const currentlyData = JSON.parse(currentlyDataString);
 
-            if (singleBet?.marketId.includes("-")) {
+            // if (singleBet?.marketId.includes("-")) {
 
-                if (singleBet?.marketName?.toLowerCase()?.includes("bookmaker") || singleBet?.marketName == "Tied Match") {
+            //     if (singleBet?.marketName?.toLowerCase()?.includes("bookmaker") || singleBet?.marketName == "Tied Match") {
 
-                    if (singleBet?.marketName == "bookmaker") {
-                        console.log("======= bookmaker ============");
-                        const sId = singleBet?.marketId?.split("-")?.[1];
-                        const recentBookmaketData = currentlyData?.data?.t2?.[0]?.bm1?.length > 0 ? currentlyData?.data?.t2?.[0]?.bm1 : currentlyData?.data?.t2?.[0]?.bm2;
-                        const bettedRecentBookmaketData = recentBookmaketData?.find((i) => i?.sid == sId);
-                        if (singleBet?.side === "Back") {
-                            const BackOddsArray = [bettedRecentBookmaketData?.b1];
-                            const findOdd = BackOddsArray?.find((od) => od == singleBet?.odd);
-                            if (!findOdd) {
-                                return res.status(400).json({ message: 'Odds Changed, bookmaker' });
-                            }
-                        } else {
-                            const LayOddsArray = [bettedRecentBookmaketData?.l1];
-                            const findOdd = LayOddsArray?.find((od) => od == singleBet?.odd);
-                            if (!findOdd) {
-                                return res.status(400).json({ message: 'Odds Changed, bookmaker' });
-                            }
-                        }
-                    } else if (singleBet?.marketName != "bookmaker" && singleBet?.marketName?.toLowerCase()?.includes("bookmaker")) {
-                        console.log("======= bookmaker extra ============");
-                        const sId = singleBet?.marketId?.split("-")?.[1];
-                        const dataArrayBookmaker = currentlyData?.data?.t2?.[1] || currentlyData?.data?.t2?.[2];
-                        const recentBookmaketData = dataArrayBookmaker?.bm1?.length > 0 ? dataArrayBookmaker?.bm1 : dataArrayBookmaker?.bm2;
-                        const bettedRecentBookmaketData = recentBookmaketData?.find((i) => i?.sid == sId);
-                        if (singleBet?.side === "Back") {
-                            const BackOddsArray = [bettedRecentBookmaketData?.b1];
-                            const findOdd = BackOddsArray?.find((od) => od == singleBet?.odd && bettedRecentBookmaketData?.s?.toLowerCase() == "active");
-                            if (!findOdd) {
-                                return res.status(400).json({ message: 'Odds Changed, extra bookmaker' });
-                            }
-                        } else {
-                            const LayOddsArray = [bettedRecentBookmaketData?.l1];
-                            const findOdd = LayOddsArray?.find((od) => od == singleBet?.odd && bettedRecentBookmaketData?.s?.toLowerCase() == "active");
-                            if (!findOdd) {
-                                return res.status(400).json({ message: 'Odds Changed, extra bookmaker' });
-                            }
-                        }
-                    } else if (singleBet?.marketName == "Tied Match") {
-                        console.log("======= bookmaker tied match ============");
-                        const sId = singleBet?.marketId?.split("-")?.[1];
-                        const dataArrayBookmaker = currentlyData?.data?.t2?.[2] || currentlyData?.data?.t2?.[1];
-                        const recentBookmaketData = dataArrayBookmaker?.bm1?.length > 0 ? dataArrayBookmaker?.bm1 : dataArrayBookmaker?.bm2;
-                        const bettedRecentBookmaketData = recentBookmaketData?.find((i) => i?.sid == sId);
-                        if (singleBet?.side === "Back") {
-                            const BackOddsArray = [bettedRecentBookmaketData?.b1];
-                            const findOdd = BackOddsArray?.find((od) => od == singleBet?.odd && bettedRecentBookmaketData?.s?.toLowerCase() == "active");
-                            if (!findOdd) {
-                                return res.status(400).json({ message: 'Odds Changed, tied match' });
-                            }
-                        } else {
-                            const LayOddsArray = [bettedRecentBookmaketData?.l1];
-                            const findOdd = LayOddsArray?.find((od) => od == singleBet?.odd && bettedRecentBookmaketData?.s?.toLowerCase() == "active");
-                            if (!findOdd) {
-                                return res.status(400).json({ message: 'Odds Changed, tied match' });
-                            }
-                        }
-                    }
+            //         if (singleBet?.marketName == "bookmaker") {
+            //             console.log("======= bookmaker ============");
+            //             const sId = singleBet?.marketId?.split("-")?.[1];
+            //             const recentBookmaketData = currentlyData?.data?.t2?.[0]?.bm1?.length > 0 ? currentlyData?.data?.t2?.[0]?.bm1 : currentlyData?.data?.t2?.[0]?.bm2;
+            //             const bettedRecentBookmaketData = recentBookmaketData?.find((i) => i?.sid == sId);
+            //             if (singleBet?.side === "Back") {
+            //                 const BackOddsArray = [bettedRecentBookmaketData?.b1];
+            //                 const findOdd = BackOddsArray?.find((od) => od == singleBet?.odd);
+            //                 if (!findOdd) {
+            //                     return res.status(400).json({ message: 'Odds Changed, bookmaker' });
+            //                 }
+            //             } else {
+            //                 const LayOddsArray = [bettedRecentBookmaketData?.l1];
+            //                 const findOdd = LayOddsArray?.find((od) => od == singleBet?.odd);
+            //                 if (!findOdd) {
+            //                     return res.status(400).json({ message: 'Odds Changed, bookmaker' });
+            //                 }
+            //             }
+            //         } else if (singleBet?.marketName != "bookmaker" && singleBet?.marketName?.toLowerCase()?.includes("bookmaker")) {
+            //             console.log("======= bookmaker extra ============");
+            //             const sId = singleBet?.marketId?.split("-")?.[1];
+            //             const dataArrayBookmaker = currentlyData?.data?.t2?.[1] || currentlyData?.data?.t2?.[2];
+            //             const recentBookmaketData = dataArrayBookmaker?.bm1?.length > 0 ? dataArrayBookmaker?.bm1 : dataArrayBookmaker?.bm2;
+            //             const bettedRecentBookmaketData = recentBookmaketData?.find((i) => i?.sid == sId);
+            //             if (singleBet?.side === "Back") {
+            //                 const BackOddsArray = [bettedRecentBookmaketData?.b1];
+            //                 const findOdd = BackOddsArray?.find((od) => od == singleBet?.odd && bettedRecentBookmaketData?.s?.toLowerCase() == "active");
+            //                 if (!findOdd) {
+            //                     return res.status(400).json({ message: 'Odds Changed, extra bookmaker' });
+            //                 }
+            //             } else {
+            //                 const LayOddsArray = [bettedRecentBookmaketData?.l1];
+            //                 const findOdd = LayOddsArray?.find((od) => od == singleBet?.odd && bettedRecentBookmaketData?.s?.toLowerCase() == "active");
+            //                 if (!findOdd) {
+            //                     return res.status(400).json({ message: 'Odds Changed, extra bookmaker' });
+            //                 }
+            //             }
+            //         } else if (singleBet?.marketName == "Tied Match") {
+            //             console.log("======= bookmaker tied match ============");
+            //             const sId = singleBet?.marketId?.split("-")?.[1];
+            //             const dataArrayBookmaker = currentlyData?.data?.t2?.[2] || currentlyData?.data?.t2?.[1];
+            //             const recentBookmaketData = dataArrayBookmaker?.bm1?.length > 0 ? dataArrayBookmaker?.bm1 : dataArrayBookmaker?.bm2;
+            //             const bettedRecentBookmaketData = recentBookmaketData?.find((i) => i?.sid == sId);
+            //             if (singleBet?.side === "Back") {
+            //                 const BackOddsArray = [bettedRecentBookmaketData?.b1];
+            //                 const findOdd = BackOddsArray?.find((od) => od == singleBet?.odd && bettedRecentBookmaketData?.s?.toLowerCase() == "active");
+            //                 if (!findOdd) {
+            //                     return res.status(400).json({ message: 'Odds Changed, tied match' });
+            //                 }
+            //             } else {
+            //                 const LayOddsArray = [bettedRecentBookmaketData?.l1];
+            //                 const findOdd = LayOddsArray?.find((od) => od == singleBet?.odd && bettedRecentBookmaketData?.s?.toLowerCase() == "active");
+            //                 if (!findOdd) {
+            //                     return res.status(400).json({ message: 'Odds Changed, tied match' });
+            //                 }
+            //             }
+            //         }
 
-                } else if (singleBet?.marketName == "fancy") {
-                    console.log("======= fancy ============");
-                    const sId = singleBet?.marketId?.split("-")?.[1];
-                    const fancyRecentMarket = currentlyData?.data?.t3?.find((fn) => fn?.sid == sId);
-                    const scoringSelectionName = singleBet?.selectionName?.split(" ");
-                    const score = scoringSelectionName?.[scoringSelectionName?.length - 1];
-                    if (singleBet?.side === "Back") {
-                        if (score != fancyRecentMarket?.b1) {
-                            return res.status(400).json({ message: 'Odds Changed, fancy lay' });
-                        }
-                        if (fancyRecentMarket?.gstatus != "") {
-                            return res.status(400).json({ message: 'Bet Timed out' });
-                        }
-                    } else {
-                        if (score != fancyRecentMarket?.l1) {
-                            return res.status(400).json({ message: 'Odds Changed, fancy lay' });
-                        }
-                        if (fancyRecentMarket?.gstatus != "") {
-                            return res.status(400).json({ message: 'Bet Timed out' });
-                        }
-                    }
-                }
+            //     } else if (singleBet?.marketName == "fancy") {
+            //         console.log("======= fancy ============");
+            //         const sId = singleBet?.marketId?.split("-")?.[1];
+            //         const fancyRecentMarket = currentlyData?.data?.t3?.find((fn) => fn?.sid == sId);
+            //         const scoringSelectionName = singleBet?.selectionName?.split(" ");
+            //         const score = scoringSelectionName?.[scoringSelectionName?.length - 1];
+            //         if (singleBet?.side === "Back") {
+            //             if (score != fancyRecentMarket?.b1) {
+            //                 return res.status(400).json({ message: 'Odds Changed, fancy lay' });
+            //             }
+            //             if (fancyRecentMarket?.gstatus != "") {
+            //                 return res.status(400).json({ message: 'Bet Timed out' });
+            //             }
+            //         } else {
+            //             if (score != fancyRecentMarket?.l1) {
+            //                 return res.status(400).json({ message: 'Odds Changed, fancy lay' });
+            //             }
+            //             if (fancyRecentMarket?.gstatus != "") {
+            //                 return res.status(400).json({ message: 'Bet Timed out' });
+            //             }
+            //         }
+            //     }
 
-            } else {
-                const runner = currentlyData?.runners?.find((d) => d?.selectionId == singleBet?.gameId);
-                const currentBets = singleBet?.side === "Back" ? runner?.ex?.availableToBack : runner?.ex?.availableToLay;
-                const checkBetExists = currentBets?.find((b) => b?.price == singleBet?.odd && currentlyData?.status == "OPEN");
-                if (!checkBetExists) {
-                    return res.status(400).json({ message: 'Odds Changed' });
-                }
-            }
+            // } else {
+            //     const runner = currentlyData?.runners?.find((d) => d?.selectionId == singleBet?.gameId);
+            //     const currentBets = singleBet?.side === "Back" ? runner?.ex?.availableToBack : runner?.ex?.availableToLay;
+            //     const checkBetExists = currentBets?.find((b) => b?.price == singleBet?.odd && currentlyData?.status == "OPEN");
+            //     if (!checkBetExists) {
+            //         return res.status(400).json({ message: 'Odds Changed' });
+            //     }
+            // }
 
             await betsModel.insertMany(betsData);
 

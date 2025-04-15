@@ -22,6 +22,7 @@ const checkDomain = require("./middleware.js");
 const BonusRouter = require("./Routes/BonusRoutes.js");
 const SportsApiRouter = require("./SportsApi/sportsApisRouter.js");
 const { fn_storeEvents } = require("./SportsApi/sportsApis.js");
+const { fn_declareFancyResult } = require("./SportsApi/sportsApis2.js");
 
 dotenv.config();
 
@@ -112,4 +113,8 @@ app.listen(process.env.PORT, () => {
         console.log("Running scheduled fn_storeEvents...");
         fn_storeEvents().catch(err => console.error("Scheduled fn_storeEvents error:", err));
     }, 60 * 1000);
+    setInterval(() => {
+        console.log("Running Fancy Result Api...");
+        fn_declareFancyResult().catch(err => console.error("Scheduled fn_declareFancyResult error:", err));
+    }, 120 * 1000);
 });

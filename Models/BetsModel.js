@@ -23,6 +23,7 @@ const betSchema = new mongoose.Schema({
     // ----
     stake: { type: Number },
     odd: { type: Number, required: true },
+    size: { type: Number, required: true },
     duplicateOdd: { type: Number },
     profit: { type: Number, required: true },
     exposure: { type: Number },
