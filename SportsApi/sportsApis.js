@@ -226,6 +226,46 @@ const fn_getInPlayEvents = async (req, res) => {
     }
 };
 
+const fn_getAllEvents = async (req, res) => {
+    try {
+        const { sportId } = req.query;
+        if (!sportId) return res.status(400).json({ message: "No Sport ID Found" });
+
+        const cachedData = await redisClient.get("new_api_events");
+        if (!cachedData) {
+            return res.status(404).json({ message: "No cached events found. Please run /store-events first." });
+        }
+
+        const parsedData = JSON.parse(cachedData);
+        const sportData = parsedData.find(sport => sport.sportId === sportId);
+        if (!sportData) return res.status(404).json({ message: "No events found for the given Sport ID" });
+
+        const formattedCompetitions = [];
+
+        sportData.competitions.forEach(competition => {
+            const filteredEvents = competition.events.filter(event => {
+                // Remove date check, only keep normalized name check
+                const normalizedEventName = event.eventName.replace(/\s+/g, '').toLowerCase();
+                const normalizedCompetitionName = competition.competitionName.replace(/\s+/g, '').toLowerCase();
+                return normalizedEventName !== normalizedCompetitionName;
+            });
+
+            if (filteredEvents.length > 0) {
+                formattedCompetitions.push({
+                    competitionName: competition.competitionName,
+                    competitionId: competition.competitionId,
+                    events: filteredEvents
+                });
+            };
+        });
+
+        return res.status(200).json({ sportId, competitions: formattedCompetitions });
+    } catch (error) {
+        console.error("Error in fn_getFilteredEvents:", error);
+        return res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+};
+
 module.exports = {
     fn_getAllMatchesApi,
     fn_getEvents,
@@ -233,5 +273,6 @@ module.exports = {
     fn_storeEvents,
     fn_getAdminGames,
     fn_getMarkets,
-    fn_getInPlayEvents
+    fn_getInPlayEvents,
+    fn_getAllEvents
 };
