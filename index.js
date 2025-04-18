@@ -52,7 +52,7 @@ app.use('/uploads', express.static('uploads'));
 db;
 
 app.get("/", (req, res) => {
-    res.json({ message: "TEST Backend is running correctly!!!" });
+    res.json({ message: "Backend is running correctly!!!" });
 });
 
 // app.use("/user", checkDomain, checkMarketData, UserRouter);
