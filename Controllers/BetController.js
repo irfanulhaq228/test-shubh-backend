@@ -4,6 +4,7 @@ const userModel = require("../Models/UserModel");
 const BetDelayModel = require("../Models/BetDelayModel");
 const adminModel = require("../Models/AdminModel");
 const redis = require('redis');
+const { default: mongoose } = require("mongoose");
 
 const redisClient = redis.createClient({
     socket: {
@@ -339,6 +340,88 @@ const updateBets = async (req, res) => {
     }
 };
 
+const fn_getSuperAdminPendingBets = async (req, res) => {
+    try {
+        const { gameName, side, marketName } = req.query;
+
+        const filter = { status: "pending" };
+        if (gameName) {
+            filter.gameName = { $regex: new RegExp(`^${gameName}$`, "i") };
+        }
+        if (side) {
+            filter.side = { $regex: new RegExp(`^${side}$`, "i") };
+        }
+        if (marketName) {
+            filter.marketName = { $regex: new RegExp(`^${marketName}$`, "i") };
+        }
+
+        const bets = await betsModel.find(filter).sort({ createdAt: -1 });
+
+        const allPendingBets = await betsModel.find({ status: "pending" });
+
+        const gameNameSet = new Set();
+        const marketNameSet = new Set();
+
+        allPendingBets.forEach(bet => {
+            if (bet.gameName) {
+                gameNameSet.add(bet.gameName.toLowerCase());
+            }
+            if (bet.marketName) {
+                marketNameSet.add(bet.marketName.toLowerCase());
+            }
+        });
+
+        const gameNames = Array.from(gameNameSet);
+        const marketNames = Array.from(marketNameSet);
+
+        return res.status(200).json({ data: bets, gameNames, marketNames });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Server Error!", error });
+    }
+};
+
+
+const fn_updateBetResultsManually = async (req, res) => {
+    try {
+        const { ids, value } = req.body;
+
+        if (!Array.isArray(ids) || !value || !['win', 'loss'].includes(value)) {
+            return res.status(400).json({ message: "Invalid input." });
+        }
+
+        const objectIds = ids.map(id => new mongoose.Types.ObjectId(id));
+
+        // Find the bets
+        const bets = await betsModel.find({ _id: { $in: objectIds } });
+
+        for (const bet of bets) {
+            const user = await userModel.findById(bet?.user);
+
+            if (!user) continue;
+
+            if (value === 'win') {
+                user.wallet += bet.profit;
+            } else if (value === 'loss') {
+                user.wallet += bet.exposure;
+            }
+
+            // Save updated user
+            await user.save();
+
+            // Update bet status
+            bet.status = value;
+            await bet.save();
+        }
+
+        return res.status(200).json({ message: "Bets and user wallets updated successfully." });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Server Error!", error });
+    }
+};
+
 module.exports = {
     createBets,
     getAllBets,
@@ -349,6 +432,8 @@ module.exports = {
 
     getAllBetsByUser,
     getAllOpenBetsByUser,
+    fn_getSuperAdminPendingBets,
+    fn_updateBetResultsManually,
 
     updateBets
 };

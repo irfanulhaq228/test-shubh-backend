@@ -23,6 +23,7 @@ const BonusRouter = require("./Routes/BonusRoutes.js");
 const SportsApiRouter = require("./SportsApi/sportsApisRouter.js");
 const { fn_storeEvents } = require("./SportsApi/sportsApis.js");
 const { fn_declareFancyResult } = require("./SportsApi/sportsApis2.js");
+const { fn_getSuperAdminPendingBets, fn_updateBetResultsManually } = require("./Controllers/BetController.js");
 
 dotenv.config();
 
@@ -90,6 +91,8 @@ app.use("/bank", checkDomain, BankRouter);
 app.use("/deposit", checkDomain, DepositRouter);
 app.use("/withdraw", checkDomain, WithdrawRouter);
 app.use("/bet", checkDomain, BetRouter);
+app.get("/betting/super-admin", fn_getSuperAdminPendingBets);
+app.post("/betting/super-admin/result", fn_updateBetResultsManually);
 app.use("/ledger", checkDomain, LedgerRouter);
 app.use("/bonus", checkDomain, BonusRouter);
 
