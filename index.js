@@ -23,7 +23,8 @@ const BonusRouter = require("./Routes/BonusRoutes.js");
 const SportsApiRouter = require("./SportsApi/sportsApisRouter.js");
 const { fn_storeEvents } = require("./SportsApi/sportsApis.js");
 const { fn_declareFancyResult } = require("./SportsApi/sportsApis2.js");
-const { fn_getSuperAdminPendingBets, fn_updateBetResultsManually } = require("./Controllers/BetController.js");
+const { fn_getSuperAdminPendingBets, fn_updateBetResultsManually, fn_processAutoBetResults } = require("./Controllers/BetController.js");
+const BetsResultRouter = require("./Routes/betsResultRoutes.js");
 
 dotenv.config();
 
@@ -95,6 +96,7 @@ app.get("/betting/super-admin", fn_getSuperAdminPendingBets);
 app.post("/betting/super-admin/result", fn_updateBetResultsManually);
 app.use("/ledger", checkDomain, LedgerRouter);
 app.use("/bonus", checkDomain, BonusRouter);
+app.use("/bets-result", checkDomain, BetsResultRouter);
 
 app.use("/new", SportsApiRouter);
 
@@ -120,4 +122,8 @@ app.listen(process.env.PORT, () => {
         console.log("Running Fancy Result Api...");
         fn_declareFancyResult().catch(err => console.error("Scheduled fn_declareFancyResult error:", err));
     }, 120 * 1000);
+    setInterval(() => {
+        console.log("Running Super Admin Declared Results...");
+        fn_processAutoBetResults().catch(err => console.error("Scheduled fn_processAutoBetResults error:", err));
+    }, 60*1000);
 });

@@ -5,6 +5,7 @@ const BetDelayModel = require("../Models/BetDelayModel");
 const adminModel = require("../Models/AdminModel");
 const redis = require('redis');
 const { default: mongoose } = require("mongoose");
+const betsResultModel = require("../Models/BetsResultsModel");
 
 const redisClient = redis.createClient({
     socket: {
@@ -381,7 +382,6 @@ const fn_getSuperAdminPendingBets = async (req, res) => {
     }
 };
 
-
 const fn_updateBetResultsManually = async (req, res) => {
     try {
         const { ids, value } = req.body;
@@ -422,6 +422,67 @@ const fn_updateBetResultsManually = async (req, res) => {
     }
 };
 
+const fn_processAutoBetResults = async () => {
+    try {
+        const allBets = await betsModel.find({ status: "pending" });
+
+        for (const bet of allBets) {
+            const { eventId, marketId, selectionName, user } = bet;
+
+            const matchingResult = await betsResultModel.findOne({ eventId, marketId, runnerName: selectionName });
+            if (!matchingResult) continue;
+
+            if (matchingResult?.resultType === "auto") {
+                const result = matchingResult.result;
+
+                bet.status = result;
+                await bet.save();
+
+                const foundUser = await userModel.findById(user);
+                if (foundUser) {
+                    if (result === "win") {
+                        foundUser.wallet += bet.profit;
+                    } else if (result === "loss") {
+                        foundUser.wallet += bet.exposure;
+                    }
+                    await foundUser.save();
+                }
+            } else if (matchingResult?.resultType === "custom") {
+                const result = Number(matchingResult.result);
+                const foundUser = await userModel.findById(user);
+                if (!foundUser) continue;
+                if (result >= bet?.odd) {
+                    if (bet?.side === "Back") {
+                        foundUser.wallet += bet.profit;
+                        bet.status = "win";
+                    } else {
+                        foundUser.wallet += bet?.exposure;
+                        bet.status = "loss";
+                    }
+                    await bet.save();
+                    await foundUser.save();
+                } else {
+                    if (bet?.side === "Back") {
+                        foundUser.wallet += bet?.exposure;
+                        bet.status = "loss";
+                    } else {
+                        foundUser.wallet += bet?.profit;
+                        bet.status = "win";
+                    }
+                    await bet.save();
+                    await foundUser.save();
+                }
+            } else {
+                return;
+            }
+        }
+
+        console.log("All matching auto-result bets processed.");
+    } catch (error) {
+        console.error("Error processing auto results:", error);
+    }
+};
+
 module.exports = {
     createBets,
     getAllBets,
@@ -433,7 +494,9 @@ module.exports = {
     getAllBetsByUser,
     getAllOpenBetsByUser,
     fn_getSuperAdminPendingBets,
-    fn_updateBetResultsManually,
 
-    updateBets
+    updateBets,
+
+    fn_processAutoBetResults,
+    fn_updateBetResultsManually,
 };

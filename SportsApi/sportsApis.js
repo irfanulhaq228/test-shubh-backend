@@ -3,6 +3,8 @@ const redis = require('redis');
 const { default: axios } = require('axios');
 const gameModel = require('../Models/GameModel');
 const EventModel = require('../Models/EventsModel');
+const betModel = require('../Models/BetsModel');
+const betsResultModel = require('../Models/BetsResultsModel');
 
 const redisClient = redis.createClient({
     socket: {
@@ -19,6 +21,123 @@ const sportConfigs = [
     { id: 2, name: "tennis" },
     { id: 1, name: "soccer" }
 ];
+
+const fn_getAllSportsApi = async (req, res) => {
+    try {
+        const data = sportConfigs;
+        return res.status(200).json({ message: "Success", data: data });
+    } catch (error) {
+        console.log("error ====> ", error);
+        return res.status(500).json({ message: "Network Error", error: error });
+    }
+}
+
+const fn_getEventsBySportIdApi = async (req, res) => {
+    try {
+        const { sportId } = req.query;
+
+        if (!sportId) {
+            return res.status(400).json({ message: "sportId is required" });
+        }
+
+        const bets = await betModel.find({ sportId: sportId, status: "pending" });
+
+        const uniqueMap = new Map();
+
+        bets.forEach(bet => {
+            const key = `${bet.eventId}-${bet.gameName}`;
+            if (!uniqueMap.has(key)) {
+                uniqueMap.set(key, {
+                    eventId: bet.eventId,
+                    gameName: bet.gameName
+                });
+            }
+        });
+
+        const uniqueEvents = Array.from(uniqueMap.values());
+
+        return res.status(200).json({ data: uniqueEvents });
+    } catch (error) {
+        console.log("error ====> ", error);
+        return res.status(500).json({ message: "Network Error", error });
+    }
+};
+
+const fn_getMarketsByEventIdApi = async (req, res) => {
+    try {
+        const { eventId } = req.query;
+
+        if (!eventId) {
+            return res.status(400).json({ message: "eventId is required" });
+        }
+
+        const bets = await betModel.find({ eventId: eventId, status: "pending" });
+
+        const marketMap = new Map();
+
+        bets.forEach(bet => {
+            const key = `${bet.marketId}-${bet.marketName}`;
+            if (!marketMap.has(key)) {
+                marketMap.set(key, {
+                    marketId: bet.marketId,
+                    marketName: bet.marketName
+                });
+            }
+        });
+
+        const uniqueMarkets = Array.from(marketMap.values());
+
+        return res.status(200).json({ data: uniqueMarkets });
+    } catch (error) {
+        console.log("error ====> ", error);
+        return res.status(500).json({ message: "Network Error", error });
+    }
+};
+
+const fn_getSelectionsByEventAndMarket = async (req, res) => {
+    try {
+        const { eventId, marketId } = req.query;
+
+        if (!eventId || !marketId) {
+            return res.status(400).json({ message: "eventId and marketId are required" });
+        }
+
+        // Step 1: Get declared runnerNames (selectionNames)
+        const declaredResults = await betsResultModel.find({
+            eventId,
+            marketId
+        });
+
+        const declaredSet = new Set(
+            declaredResults.map(result => result.runnerName?.toLowerCase()).filter(Boolean)
+        );
+
+        // Step 2: Get pending bets
+        const bets = await betModel.find({
+            eventId,
+            marketId,
+            status: "pending"
+        });
+
+        // Step 3: Filter unique selectionNames that are NOT in declaredSet
+        const selectionSet = new Set();
+
+        bets.forEach(bet => {
+            const name = bet.selectionName?.toLowerCase();
+            if (name && !declaredSet.has(name)) {
+                selectionSet.add(bet.selectionName);
+            }
+        });
+
+        const selectionNames = Array.from(selectionSet);
+
+        return res.status(200).json({ data: selectionNames });
+
+    } catch (error) {
+        console.log("error ====> ", error);
+        return res.status(500).json({ message: "Network Error", error });
+    }
+};
 
 const fn_getAllMatchesApi = async (req, res) => {
     try {
@@ -274,5 +393,9 @@ module.exports = {
     fn_getAdminGames,
     fn_getMarkets,
     fn_getInPlayEvents,
-    fn_getAllEvents
+    fn_getAllEvents,
+    fn_getAllSportsApi,
+    fn_getEventsBySportIdApi,
+    fn_getMarketsByEventIdApi,
+    fn_getSelectionsByEventAndMarket
 };
