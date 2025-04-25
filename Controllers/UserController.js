@@ -151,6 +151,7 @@ const loginUser = async (req, res) => {
                 bookmakerRateType: adminUser.bookmakerRateType || "percentage",
                 fancyRate: adminUser.fancyRate || 0,
                 fancyRateType: adminUser.fancyRateType || "number",
+                enableBanks: staffUser?.enableBanks
             },
             firstTime: user?.firstTime
         });
@@ -234,6 +235,7 @@ const checkUser = async (req, res) => {
                 wallet: user?.wallet,
                 phone: staffUser?.phone || masterUser?.phone || null,
                 username: user?.username,
+                enableBanks: staffUser?.enableBanks,
                 user: {
                     ...user.toObject(),
                     oddRate: adminUser.oddRate || 0,
@@ -241,7 +243,7 @@ const checkUser = async (req, res) => {
                     bookmakerRate: adminUser.bookmakerRate || 0,
                     bookmakerRateType: adminUser.bookmakerRateType || "percentage",
                     fancyRate: adminUser.fancyRate || 0,
-                    fancyRateType: adminUser.fancyRateType || "number",
+                    fancyRateType: adminUser.fancyRateType || "number"
                 }
                 // totalBets: userBets?.length,
                 // winShots: winBets?.length,
@@ -491,6 +493,33 @@ const updateUser = async (req, res) => {
     }
 };
 
+const withdrawPointByAdmin = async (req, res) => {
+    const { userId } = req.query;
+    const { value } = req.body;
+    try {
+        const user = await userModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (user.wallet < value) {
+            return res.status(400).json({ message: 'Insufficient balance in wallet' });
+        }
+
+        const updatedUser = await userModel.findByIdAndUpdate(
+            userId,
+            { $inc: { wallet: -value } },
+            { new: true }
+        );
+
+        return res.status(200).json({ message: 'Update successfully', data: updatedUser });
+
+    } catch (err) {
+        console.error(err);
+        return res.status(400).json({ message: 'Failed to authenticate token' });
+    }
+};
+
 const updatePassword = async (req, res) => {
     try {
         const { userId, newPassword } = req.body;
@@ -542,5 +571,6 @@ module.exports = {
     checkAdminOfUsers,
     getUserInfo,
     updateUser,
-    updatePassword
+    updatePassword,
+    withdrawPointByAdmin
 };

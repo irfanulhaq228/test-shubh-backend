@@ -116,10 +116,34 @@ const updateStaff = async (req, res) => {
     }
 };
 
+const updateStaffByItself = async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+
+        if (!token) {
+            return res.status(400).json({ message: 'No token provided' });
+        }
+
+        const decoded = jwt.verify(token, process.env.SECRET_KEY);
+        console.log("==============> ", decoded);
+        const staff = await staffModel.findByIdAndUpdate(decoded?.merchantId, req.body);
+        if (staff) {
+            return res.status(200).json({ message: "Master Updated Successfully" });
+        }
+
+        return res.status(400).json({ message: "Wrong Master Id" });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Server Error!" });
+    }
+};
+
 module.exports = {
     createStaff,
     loginStaff,
     getAllStaffs,
     deleteStaff,
-    updateStaff
+    updateStaff,
+    updateStaffByItself
 };

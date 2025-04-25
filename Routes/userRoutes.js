@@ -1,5 +1,5 @@
 const express = require("express");
-const { createUser, loginUser, getAllUsers, deleteUser, updateStatus, checkUser, userDataForDashboard, userApprovalAmount, userLoginDetails, checkAdminOfUsers, getUserInfo, updateUser, updatePassword } = require("../Controllers/UserController.js");
+const { createUser, loginUser, getAllUsers, deleteUser, updateStatus, checkUser, userDataForDashboard, userApprovalAmount, userLoginDetails, checkAdminOfUsers, getUserInfo, updateUser, updatePassword, withdrawPointByAdmin } = require("../Controllers/UserController.js");
 
 const UserRouter = express.Router();
 
@@ -18,6 +18,7 @@ UserRouter.post("/login", loginUser);
 UserRouter.get("/check-admin", checkAdminOfUsers);
 
 UserRouter.put("/update", updateUser);
+UserRouter.put("/withdraw-by-admin", withdrawPointByAdmin);
 UserRouter.put("/updatePassword", updatePassword);
 
 module.exports = UserRouter;

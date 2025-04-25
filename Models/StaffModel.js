@@ -7,6 +7,7 @@ const staffSchema = new mongoose.Schema({
     admin: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
     type: { type: String },
     phone: { type: String },
+    enableBanks: { type: Boolean, default: true },
     validate: { type: String, default: "111111" },
     bets: { type: Boolean, default: true },
     verified: { type: Boolean, default: true },

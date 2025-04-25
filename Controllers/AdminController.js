@@ -44,27 +44,27 @@ const createAdmin = async (req, res) => {
 
 const loginAdmin = async (req, res) => {
     try {
-        const { email, password, type } = req.body;
+        const { username, password, type } = req.body;
         if (type === "admin") {
-            const admin = await adminModel.findOne({ email });
+            const admin = await adminModel.findOne({ name: username });
             if (!admin) {
-                return res.status(401).json({ message: "Incorrect Email or Password" });
+                return res.status(401).json({ message: "Incorrect Username or Password" });
             }
             if (admin?.password !== password) {
-                return res.status(401).json({ message: "Incorrect Email or Password" })
+                return res.status(401).json({ message: "Incorrect Username or Password" })
             }
             if (!admin?.verified) {
                 return res.status(401).json({ message: "Admin is disabled by Super Admin" })
             }
-            const otp = Math.floor(100000 + Math.random() * 900000).toString();
-            const otpExpiration = new Date(Date.now() + 60 * 1000);
+            // const otp = Math.floor(100000 + Math.random() * 900000).toString();
+            // const otpExpiration = new Date(Date.now() + 60 * 1000);
 
-            await transporter.sendMail({
-                from: "irfan.netrex@gmail.com",
-                to: email,
-                subject: `OTP for Shubh Exchange Admin Login`,
-                text: `Your OTP code is ${otp}`,
-            });
+            // await transporter.sendMail({
+            //     from: "irfan.netrex@gmail.com",
+            //     to: email,
+            //     subject: `OTP for Shubh Exchange Admin Login`,
+            //     text: `Your OTP code is ${otp}`,
+            // });
 
             // await transporter.sendMail({
             //     from: "irfan.netrex@gmail.com",
@@ -80,16 +80,41 @@ const loginAdmin = async (req, res) => {
             //     text: `Your OTP code is ${otp}`,
             // });
 
-            const data = await adminModel.findByIdAndUpdate(admin._id, { otpExpiration, otp });
+            // const data = await adminModel.findByIdAndUpdate(admin._id, { otpExpiration, otp });
+            // return res.status(200).json({ message: "OTP sent to your Email", id: data._id });
 
-            return res.status(200).json({ message: "OTP sent to your Email", id: data._id });
+            var ipInfo = getIP(req);
+            const look = lookup(ipInfo?.clientIp);
+            let ipAddress = ipInfo.clientIp;
+
+            if (ipAddress.startsWith('::ffff:')) {
+                ipAddress = ipAddress.replace('::ffff:', '');
+            }
+
+            const loginDetails = {
+                loginDateTime: new Date(),
+                ipAddress: ipAddress,
+                isp: 'Unknown ISP',
+                city: look?.city || 'Unknown City',
+                state: look?.region || 'Unknown State',
+                country: look?.country || 'Unknown Country'
+            };
+
+            admin.loginDetails.push(loginDetails);
+            await admin.save();
+
+            const data = await adminModel.findByIdAndUpdate(admin._id, { verified: true });
+            const adminId = data?._id;
+            const token = jwt.sign({ adminId }, process.env.SECRET_KEY, { expiresIn: '30d' });
+            return res.status(200).json({ message: "Admin LoggedIn Successfully", token, firstTime: data.firstTime || false })
+
         } else {
-            const staff = await staffModel.findOne({ email });
+            const staff = await staffModel.findOne({ name: username });
             if (!staff) {
-                return res.status(401).json({ message: "Incorrect Email or Password" });
+                return res.status(401).json({ message: "Incorrect Username or Password" });
             }
             if (staff?.password !== password) {
-                return res.status(401).json({ message: "Incorrect Email or Password" })
+                return res.status(401).json({ message: "Incorrect Username or Password" })
             }
             if (!staff?.verified) {
                 return res.status(401).json({ message: "Master is Blocked by Admin" })
@@ -98,7 +123,7 @@ const loginAdmin = async (req, res) => {
             const merchantId = staff?._id.toHexString();
             const token = jwt.sign({ adminId }, process.env.SECRET_KEY, { expiresIn: '30d' });
             const merchantToken = jwt.sign({ merchantId }, process.env.SECRET_KEY, { expiresIn: '30d' });
-            return res.status(200).json({ message: "Master LoggedIn", token, merchantToken, firstTime: staff.firstTime, id: staff._id });
+            return res.status(200).json({ message: "Master LoggedIn", token, merchantToken, firstTime: staff.firstTime, id: staff._id, enableBanks: staff.enableBanks });
         }
     } catch (error) {
         console.log(error);
