@@ -317,6 +317,68 @@ const updateAdmin = async (req, res) => {
     }
 };
 
+const fn_reportsApi = async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return res.status(400).json({ message: 'No token provided' });
+        }
+
+        jwt.verify(token, process.env.SECRET_KEY, async (err, decoded) => {
+            if (err) {
+                return res.status(400).json({ message: 'Failed to authenticate token' });
+            }
+
+            let Deposits = [];
+            let Withdraws = [];
+
+            if (decoded?.adminId) {
+                Deposits = await depositModel.find({ admin: decoded.adminId, status: "approved" }).populate(["master", "user"]);
+                Withdraws = await withdrawModel.find({ admin: decoded.adminId, status: "approved" }).populate(["master", "user"]);
+            } else if (decoded?.merchantId) {
+                Deposits = await depositModel.find({ master: decoded.merchantId, status: "approved" }).populate(["master", "user"]);
+                Withdraws = await withdrawModel.find({ master: decoded.merchantId, status: "approved" }).populate(["master", "user"]);
+            } else {
+                return res.status(400).json({ message: "Not Authenticated", data: [] });
+            }
+
+            Deposits = Deposits.map(item => ({ ...item.toObject(), accountType: 'deposit' }));
+            Withdraws = Withdraws.map(item => ({ ...item.toObject(), accountType: 'withdraw' }));
+
+            let combinedData = [...Deposits, ...Withdraws];
+
+            const { accountType, currentPage = 1, limit = 10 } = req.query;
+
+            if (accountType === 'deposit') {
+                combinedData = combinedData.filter(item => item.accountType === 'deposit');
+            } else if (accountType === 'withdraw') {
+                combinedData = combinedData.filter(item => item.accountType === 'withdraw');
+            }
+
+            combinedData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            const page = parseInt(currentPage) || 1;
+            const perPage = parseInt(limit) || 10;
+
+            const startIndex = (page - 1) * perPage;
+            const endIndex = page * perPage;
+
+            const paginatedData = combinedData.slice(startIndex, endIndex);
+
+            return res.status(200).json({
+                message: "Data fetched successfully",
+                totalRecords: combinedData.length,
+                currentPage: page,
+                limit: perPage,
+                data: paginatedData
+            });
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Server Error!", error });
+    }
+};
+
 module.exports = {
     createAdmin,
     loginAdmin,
@@ -326,5 +388,6 @@ module.exports = {
     adminLoginDetails,
     getAdminDashboardData,
     checkAdminByToken,
-    updateAdmin
+    updateAdmin,
+    fn_reportsApi
 };

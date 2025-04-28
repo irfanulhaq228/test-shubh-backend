@@ -88,7 +88,8 @@ const updateStaff = async (req, res) => {
         const masterId = req.params.id;
 
         if (req.body.wallet) {
-            const staff = await staffModel.findById(id);
+            const staff = await staffModel.findById(masterId);
+
             if (!staff) {
                 return res.status(400).json({ message: "Wrong Master Id" });
             }
@@ -99,7 +100,7 @@ const updateStaff = async (req, res) => {
             }
 
             await adminModel.findByIdAndUpdate(staff.admin, { $inc: { wallet: -req.body.wallet } });
-            await staffModel.findByIdAndUpdate(id, { $inc: { wallet: req.body.wallet } });
+            await staffModel.findByIdAndUpdate(masterId, { $inc: { wallet: req.body.wallet } });
 
             return res.status(200).json({ message: "Master Wallet Updated Successfully" });
         }
@@ -117,7 +118,7 @@ const updateStaff = async (req, res) => {
             return res.status(200).json({ message: "Master Updated Successfully", data: staffUpdate });
         }
 
-        const staff = await staffModel.findByIdAndUpdate(id, req.body, { new: true });
+        const staff = await staffModel.findByIdAndUpdate(masterId, req.body, { new: true });
         if (staff) {
             return res.status(200).json({ message: "Master Updated Successfully", data: staff });
         }
