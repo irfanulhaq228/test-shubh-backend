@@ -84,13 +84,14 @@ const deleteStaff = async (req, res) => {
 
 const updateStaff = async (req, res) => {
     try {
-        const { id } = req.params;
+        const id = req.adminId;
+        const masterId = req.params.id;
 
         if (req.body.wallet) {
             const staff = await staffModel.findById(id);
             if (!staff) {
                 return res.status(400).json({ message: "Wrong Master Id" });
-            };
+            }
 
             const admin = await adminModel.findById(staff.admin);
             if (!admin || admin.wallet < req.body.wallet) {
@@ -103,9 +104,22 @@ const updateStaff = async (req, res) => {
             return res.status(200).json({ message: "Master Wallet Updated Successfully" });
         }
 
-        const staff = await staffModel.findByIdAndUpdate(id, req.body);
+        if (req.body.type) {
+            const staffUpdate = await staffModel.findByIdAndUpdate(masterId, { type: req.body.type }, { new: true });
+
+            // Update admin's type from 'main' to 'master'
+            const test = await staffModel.findOneAndUpdate(
+                { admin: id, type: "main", _id: { $ne: masterId } },
+                { type: "master" },
+                { new: true }
+            );
+
+            return res.status(200).json({ message: "Master Updated Successfully", data: staffUpdate });
+        }
+
+        const staff = await staffModel.findByIdAndUpdate(id, req.body, { new: true });
         if (staff) {
-            return res.status(200).json({ message: "Master Updated Successfully" });
+            return res.status(200).json({ message: "Master Updated Successfully", data: staff });
         }
 
         return res.status(400).json({ message: "Wrong Master Id" });
@@ -115,6 +129,7 @@ const updateStaff = async (req, res) => {
         return res.status(500).json({ message: "Server Error!" });
     }
 };
+
 
 const updateStaffByItself = async (req, res) => {
     try {
