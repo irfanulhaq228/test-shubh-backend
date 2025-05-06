@@ -20,6 +20,7 @@ const betSchema = new mongoose.Schema({
     admin: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
     master: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff' },
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    tno: { type: Number },
     // ----
     stake: { type: Number },
     odd: { type: Number, required: true },

@@ -293,7 +293,7 @@ const getAllOpenBetsByUser = async (req, res) => {
         const userId = decoded?.id;
         const admin = req.adminId;
 
-        const bets = await betsModel.find({ user: userId, status: { $nin: ["win", "loss", "abandoned"] }, admin }).sort({ createdAt: -1 });
+        const bets = await betsModel.find({ user: userId, status: { $nin: ["win", "loss", "abandoned", "cashout"] }, admin }).sort({ createdAt: -1 });
         if (bets.length === 0) {
             return res.status(400).json({ message: "No Bet Found" })
         }
@@ -434,19 +434,28 @@ const fn_processAutoBetResults = async () => {
 
             if (matchingResult?.resultType === "auto") {
                 const result = matchingResult.result;
-
-                bet.status = result;
-                await bet.save();
-
                 const foundUser = await userModel.findById(user);
-                if (foundUser) {
+
+                if (bet?.side === "Back") {
                     if (result === "win") {
                         foundUser.wallet += bet.profit;
-                    } else if (result === "loss") {
+                        bet.status = "win";
+                    } else {
                         foundUser.wallet += bet.exposure;
+                        bet.status = "loss";
                     }
-                    await foundUser.save();
-                }
+                } else {
+                    if (result === "win") {
+                        foundUser.wallet += bet.exposure;
+                        bet.status = "loss";
+                    } else {
+                        foundUser.wallet += bet.profit;
+                        bet.status = "win";
+                    }
+                };
+                await foundUser.save();
+                await bet.save();
+
             } else if (matchingResult?.resultType === "custom") {
                 const result = Number(matchingResult.result);
                 const foundUser = await userModel.findById(user);

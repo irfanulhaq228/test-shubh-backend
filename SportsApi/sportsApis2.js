@@ -1,5 +1,6 @@
 const fs = require('fs');
 const redis = require('redis');
+const jwt = require("jsonwebtoken");
 const { default: axios } = require('axios');
 const gameModel = require('../Models/GameModel');
 const EventModel = require('../Models/EventsModel');
@@ -74,10 +75,50 @@ const fn_declareFancyResult = async (req, res) => {
         console.error("Error in fn_declareFancyResult:", error);
         return res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
-}
+};
+
+const fn_cashoutApi = async (req, res) => {
+    try {
+        const { eventId, marketId, amount } = req.body;
+
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return res.status(400).json({ message: 'No token provided' });
+        }
+
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.SECRET_KEY);
+        } catch (err) {
+            return res.status(400).json({ message: 'Invalid or expired token' });
+        }
+
+        const user = await userModel.findById(decoded.id);
+        if (!user) {
+            return res.status(400).json({ message: "User not found" });
+        };
+
+        const result = await betModel.updateMany(
+            { eventId, marketId, user: decoded.id },
+            { $set: { status: "cashout" } }
+        );
+
+        return res.status(200).json({
+            message: "Cashout processed successfully",
+            updatedWallet: user.wallet,
+            updatedBets: result.modifiedCount
+        });
+
+    } catch (error) {
+        console.error("Error in fn_cashoutApi:", error);
+        return res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+};
+
 
 module.exports = {
     fn_getExtraMarketsData,
     fn_getFancyResults,
-    fn_declareFancyResult
+    fn_declareFancyResult,
+    fn_cashoutApi
 };
