@@ -12,6 +12,7 @@ const betModel = require("../Models/BetsModel.js");
 const depositModel = require("../Models/DepositModel.js");
 const withdrawModel = require("../Models/WithdrawModel.js");
 const staffModel = require("../Models/StaffModel.js");
+const adminDepositModel = require("../Models/AdminDepositPointModel.js");
 
 const createAdmin = async (req, res) => {
     try {
@@ -379,6 +380,57 @@ const fn_reportsApi = async (req, res) => {
     }
 };
 
+const createDepositRequest = async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return res.status(400).json({ message: 'No token provided' });
+        }
+
+        const decoded = jwt.verify(token, process.env.SECRET_KEY);
+        const valueToAdd = req.body.value;
+
+        if (typeof valueToAdd !== 'number') {
+            return res.status(400).json({ message: 'Invalid deposit value' });
+        };
+
+        const updatedAdmin = await adminModel.findByIdAndUpdate(decoded.adminId, { $inc: { pendingDeposit: valueToAdd } }, { new: true });
+        const createDeposit = await adminDepositModel.create({ admin: decoded.adminId, amount: valueToAdd })
+        if (!updatedAdmin) {
+            return res.status(400).json({ message: 'Admin not found' });
+        }
+        if (!createDeposit) {
+            return res.status(400).json({ message: 'Create Deposit not created' });
+        }
+
+        return res.status(200).json({
+            message: "Request Submitted successfully",
+            pendingDeposit: updatedAdmin.pendingDeposit
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Server Error!" });
+    }
+};
+
+const getDepositRequest = async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return res.status(400).json({ message: 'No token provided' });
+        }
+
+        const decoded = jwt.verify(token, process.env.SECRET_KEY);
+
+        const data = await adminDepositModel.find({ admin: decoded.adminId }).sort({ createdAt: -1 });
+
+        return res.status(200).json({ message: "Request Submitted successfully", data });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Server Error!" });
+    }
+}
+
 module.exports = {
     createAdmin,
     loginAdmin,
@@ -389,5 +441,7 @@ module.exports = {
     getAdminDashboardData,
     checkAdminByToken,
     updateAdmin,
-    fn_reportsApi
+    fn_reportsApi,
+    createDepositRequest,
+    getDepositRequest
 };

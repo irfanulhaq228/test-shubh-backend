@@ -4,6 +4,7 @@ const adminModel = require("../Models/AdminModel");
 const WebsiteNameModel = require("../Models/WebsiteNameModel");
 const staffModel = require("../Models/StaffModel");
 const BetDelayModel = require("../Models/BetDelayModel");
+const adminDepositModel = require("../Models/AdminDepositPointModel");
 
 const createSuperAdmin = async (req, res) => {
     try {
@@ -196,6 +197,55 @@ const updateAdminWallet = async (req, res) => {
     }
 };
 
+const getAllAdminDeposits = async (req, res) => {
+    try {
+        const data = await adminDepositModel.find().populate('admin', '-password').sort({ createdAt: -1 });
+
+        if (data.length === 0) {
+            return res.status(400).json({ message: "No Admin Deposits Available" });
+        }
+
+        return res.status(200).json({ data });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Server Error!" });
+    }
+};
+
+const updateAllAdminDeposits = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updateData = req.body;
+
+        const existingDeposit = await adminDepositModel.findById(id);
+        if (!existingDeposit) {
+            return res.status(404).json({ message: "Admin Deposit not found" });
+        }
+
+        const updatedDeposit = await adminDepositModel.findByIdAndUpdate(id, updateData, { new: true });
+
+        if ((updateData.status === "approved" || updateData.status === "decline") && existingDeposit.status !== updateData.status) {
+            const updateFields = {
+                $inc: {
+                    pendingDeposit: -existingDeposit.amount
+                }
+            };
+
+            if (updateData.status === "approved") {
+                updateFields.$inc.wallet = existingDeposit.amount;
+            }
+
+            await adminModel.findByIdAndUpdate(updatedDeposit.admin, updateFields);
+        }
+
+        return res.status(200).json({ message: "Data Updated", data: updatedDeposit });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Server Error!" });
+    }
+};
+
+
 module.exports = {
     createSuperAdmin,
     loginSuperAdmin,
@@ -203,5 +253,7 @@ module.exports = {
     createAdmin,
     updateAdmin,
     updateAdminStatus,
-    updateAdminWallet
+    updateAdminWallet,
+    getAllAdminDeposits,
+    updateAllAdminDeposits
 };

@@ -17,7 +17,10 @@ const adminSchema = new mongoose.Schema({
     verified: { type: Boolean, default: false },
     loginDetails: [loginDetailsSchema],
     domain: { type: String, default: "" },
+
     wallet: { type: Number, default: 0 },
+    pendingDeposit: { type: Number, default: 0 },
+    
     fcmTokens: { type: String, default: "" },
     firstTime: { type: Boolean, default: false },
 

@@ -1,5 +1,5 @@
 const express = require("express");
-const { createAdmin, getAllAdmins, loginAdmin, deleteAdmin, verifyOTP, adminLoginDetails, getAdminDashboardData, checkAdminByToken, updateAdmin, fn_reportsApi } = require("../Controllers/AdminController");
+const { createAdmin, getAllAdmins, loginAdmin, deleteAdmin, verifyOTP, adminLoginDetails, getAdminDashboardData, checkAdminByToken, updateAdmin, fn_reportsApi, createDepositRequest, getDepositRequest } = require("../Controllers/AdminController");
 
 const AdminRouter = express.Router();
 
@@ -16,5 +16,8 @@ AdminRouter.get("/dashboard-data", getAdminDashboardData);
 AdminRouter.get("/check", checkAdminByToken);
 
 AdminRouter.get("/report", fn_reportsApi);
+
+AdminRouter.post("/create-deposit", createDepositRequest);
+AdminRouter.get("/get-deposit", getDepositRequest);
 
 module.exports = AdminRouter;
