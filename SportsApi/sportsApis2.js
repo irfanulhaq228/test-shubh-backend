@@ -15,7 +15,7 @@ const fn_getExtraMarketsData = async (req, res) => {
         const response = await axios.get(`https://api.trovetown.co/v1/apiCalls/bookmakerFancy?&apiType=all&eventId=${eventId}`);
         return res.status(200).json(response?.data);
     } catch (error) {
-        console.error("Error in fn_getExtraMarketsData:", error);
+        console.error("Error in fn_getExtraMarketsData:", error?.response);
         return res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 };

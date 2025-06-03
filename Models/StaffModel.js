@@ -16,7 +16,8 @@ const staffSchema = new mongoose.Schema({
     paymentInformation: { type: {}, default: { edit: false, view: false } },
     webSettings: { type: {}, default: { edit: false, view: false } },
     wallet: { type: Number, default: 0 },
-    firstTime: { type: Boolean, default: true }
+    firstTime: { type: Boolean, default: true },
+    creditTransaction: {type: Number, default: 0}
 }, {
     timestamps: true
 });

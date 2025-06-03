@@ -25,6 +25,8 @@ const { fn_storeEvents } = require("./SportsApi/sportsApis.js");
 const { fn_declareFancyResult } = require("./SportsApi/sportsApis2.js");
 const { fn_getSuperAdminPendingBets, fn_updateBetResultsManually, fn_processAutoBetResults } = require("./Controllers/BetController.js");
 const BetsResultRouter = require("./Routes/betsResultRoutes.js");
+const bonusLogRouter = require("./Routes/bonusLogRoute.js");
+const { distributeBonuses } = require("./Controllers/BonusController.js");
 
 dotenv.config();
 
@@ -97,6 +99,7 @@ app.post("/betting/super-admin/result", fn_updateBetResultsManually);
 app.use("/ledger", checkDomain, LedgerRouter);
 app.use("/bonus", checkDomain, BonusRouter);
 app.use("/bets-result", checkDomain, BetsResultRouter);
+app.use("/bonusLogs", bonusLogRouter)
 
 app.use("/new", SportsApiRouter);
 
@@ -109,6 +112,7 @@ app.post("/test-payment-gateway", async (req, res) => {
         return res.status(200).json({ message: "Error Occured", error });
     }
 });
+
 
 app.use("/redis", REDIS.REDIS);
 
@@ -126,4 +130,8 @@ app.listen(process.env.PORT, () => {
         console.log("Running Super Admin Declared Results...");
         fn_processAutoBetResults().catch(err => console.error("Scheduled fn_processAutoBetResults error:", err));
     }, 60*1000);
+    setInterval(() => {
+        console.log("Running bonus distribution...");
+        distributeBonuses().catch(err => console.error("Scheduled distributBonuses error:", err));
+    }, 30*60*1000);
 });

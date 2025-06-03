@@ -105,9 +105,10 @@ const loginAdmin = async (req, res) => {
             await admin.save();
 
             const data = await adminModel.findByIdAndUpdate(admin._id, { verified: true });
+            const mainStaff = await staffModel.findOne({ admin: admin._id, type: 'main' });
             const adminId = data?._id;
             const token = jwt.sign({ adminId }, process.env.SECRET_KEY, { expiresIn: '30d' });
-            return res.status(200).json({ message: "Admin LoggedIn Successfully", token, firstTime: data.firstTime || false })
+            return res.status(200).json({ message: "Admin LoggedIn Successfully", token, firstTime: data.firstTime || false, id: data?._id, enableBanks: mainStaff.enableBanks || false })
 
         } else {
             const staff = await staffModel.findOne({ name: username });
@@ -275,8 +276,12 @@ const checkAdminByToken = async (req, res) => {
             if (admin) {
                 if (!admin?.verified) {
                     return res.status(400).json({ message: "Admin is Disabled" });
-                }
-                return res.status(200).json({ data: admin });
+                };
+                const mainStaff = await staffModel.findOne({ admin: admin._id, type: 'main' });
+                const plainAdmin = admin.toObject();
+                plainAdmin.enableBanks = mainStaff?.enableBanks ?? [];
+
+                return res.status(200).json({ data: plainAdmin });
             } else {
                 const master = await staffModel.findById(decoded.merchantId).select('-password');
                 if (!master?.verified) {
@@ -431,6 +436,57 @@ const getDepositRequest = async (req, res) => {
     }
 }
 
+const creditTrnsactionAPI = async (req, res) => {
+    try {
+        const creditTrn = Number(req.body.creditTransaction)
+        const sign = req.body.sign;
+
+        const id = req.params.id;
+
+        if (!id) {
+            return res.status(400).json({ status: 'fail', message: 'Id not found !!' })
+        }
+
+        if (!creditTrn || !sign) {
+            return res.status(401).json({ status: 'fail', message: 'All fields are required !!' })
+        }
+
+        const admin = await adminModel.findById(id)
+
+        console.log(admin)
+
+        console.log("admin wallet before CR = ", admin.wallet)
+        console.log("admin CR before CR = ", admin.creditTransaction)
+
+        if (!admin) {
+            return res.status(400).json({ status: 'fail', message: 'Id incorrect, Admin not found !!' })
+        }
+
+        if (sign === "-") {
+            if (admin.creditTransaction - creditTrn < 0) {
+                return res.status(403).json({status: 'fail', message: 'Credit Reference cannot go beyond 0 !!'})
+            }
+            admin.creditTransaction = admin.creditTransaction - creditTrn;
+        }
+
+        if (sign === "+") {
+            admin.creditTransaction += creditTrn,
+            admin.wallet += creditTrn
+        }
+
+        await admin.save();
+
+        console.log("admin wallet after CR = ", admin.wallet)
+        console.log("admin CR after CR = ", admin.creditTransaction)
+
+        return res.status(200).json({ status: 'ok', message: 'Credit transaction updated successfully' })
+
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json({ status: 'fail', message: 'internal server error !!' })
+    }
+}
+
 module.exports = {
     createAdmin,
     loginAdmin,
@@ -443,5 +499,6 @@ module.exports = {
     updateAdmin,
     fn_reportsApi,
     createDepositRequest,
-    getDepositRequest
+    getDepositRequest,
+    creditTrnsactionAPI
 };

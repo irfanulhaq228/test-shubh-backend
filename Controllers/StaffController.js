@@ -155,11 +155,63 @@ const updateStaffByItself = async (req, res) => {
     }
 };
 
+const creditTrnsactionAPI = async (req, res) => {
+    try {
+        const creditTrn = Number(req.body.creditTransaction)
+        const sign = req.body.sign;
+
+        const id = req.params.id
+
+        console.log("staff id = ", id)
+
+        if (!id) {
+            return res.status(400).json({ status: 'fail', message: 'Id not found !!' })
+        }
+
+        if (!creditTrn || !sign) {
+            return res.status(401).json({ status: 'fail', message: 'All fields are required !!' })
+        }
+
+        const staff = await staffModel.findById(id)
+
+        console.log("staff wallet before CR = ", staff.wallet)
+        console.log("staff CR before CR = ", staff.creditTransaction)
+
+        if (!staff) {
+            return res.status(400).json({ status: 'fail', message: 'Id incorrect, staff not found !!' })
+        }
+
+        if (sign === "-") {
+             if (staff.creditTransaction - creditTrn < 0) {
+                return res.status(403).json({status: 'fail', message: 'Credit Reference cannot go beyond 0 !!'})
+            }
+            staff.creditTransaction = staff.creditTransaction - creditTrn;
+        }
+
+        if (sign === "+") {
+            staff.creditTransaction += creditTrn,
+            staff.wallet += creditTrn
+        }
+
+        await staff.save();
+
+        console.log("staff wallet after CR = ", staff.wallet)
+        console.log("staff CR after CR = ", staff.creditTransaction)
+
+        return res.status(200).json({ status: 'ok', message: 'Credit transaction updated successfully' })
+
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json({ status: 'fail', message: 'internal server error !!' })
+    }
+}
+
 module.exports = {
     createStaff,
     loginStaff,
     getAllStaffs,
     deleteStaff,
     updateStaff,
-    updateStaffByItself
+    updateStaffByItself,
+    creditTrnsactionAPI
 };

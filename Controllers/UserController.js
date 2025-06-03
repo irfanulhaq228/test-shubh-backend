@@ -558,6 +558,58 @@ const updatePassword = async (req, res) => {
     }
 };
 
+const creditTrnsactionAPI = async (req, res) => {
+    try {
+        const creditTrn = Number(req.body.creditTransaction)
+        const sign = req.body.sign;
+
+        const id = req.params.id;
+
+        console.log("user id = ", id)
+
+        if (!id) {
+            return res.status(400).json({ status: 'fail', message: 'Id not found !!' })
+        }
+
+        if (!creditTrn || !sign) {
+            return res.status(401).json({ status: 'fail', message: 'All fields are required !!' })
+        }
+
+        const user = await userModel.findById(id)
+
+        console.log("user wallet before CR = ", user.wallet)
+        console.log("user CR before CR = ", user.creditTransaction)
+
+        if (!staff) {
+            return res.status(400).json({ status: 'fail', message: 'Id incorrect, user not found !!' })
+        }
+
+        if (sign === "-") {
+            if (user.creditTransaction - creditTrn < 0) {
+                return res.status(403).json({ status: 'fail', message: 'Credit Reference cannot go beyond 0 !!' })
+            }
+            user.creditTransaction = user.creditTransaction - creditTrn;
+        }
+
+        if (sign === "+") {
+            user.creditTransaction += creditTrn,
+            user.wallet += creditTrn
+        }
+
+        await user.save();
+
+        console.log("user wallet after CR = ", user.wallet)
+        console.log("user CR after CR = ", user.creditTransaction)
+
+        return res.status(200).json({ status: 'ok', message: 'Credit transaction updated successfully' })
+
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json({ status: 'fail', message: 'internal server error !!' })
+    }
+}
+
+
 module.exports = {
     createUser,
     loginUser,
@@ -572,5 +624,6 @@ module.exports = {
     getUserInfo,
     updateUser,
     updatePassword,
-    withdrawPointByAdmin
+    withdrawPointByAdmin,
+    creditTrnsactionAPI
 };

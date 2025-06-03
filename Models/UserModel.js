@@ -28,6 +28,7 @@ const userSchema = new mongoose.Schema({
     bonusAmount: { type: String },
     bonusType: { type: String },
     bonusValue: { type: String },
+    creditTransaction: {type: Number, default: 0}
 }, {
     timestamps: true
 });

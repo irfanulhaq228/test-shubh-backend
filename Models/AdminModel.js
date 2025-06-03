@@ -32,6 +32,8 @@ const adminSchema = new mongoose.Schema({
 
     fancyRate: { type: Number, default: 0 },
     fancyRateType: { type: String, default: "number" },
+
+    creditTransaction: {type: Number, default: 0},
 }, {
     timestamps: true
 });

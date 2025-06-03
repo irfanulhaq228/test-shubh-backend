@@ -8,6 +8,8 @@ const jwt = require("jsonwebtoken");
 
 const sendCustomNotification = require("../firebase.js");
 const staffModel = require("../Models/StaffModel.js");
+const bonusModel = require("../Models/BonusModel.js");
+const bonusLogModel = require("../Models/BonusLogs.js");
 
 const createDeposit = async (req, res) => {
     try {
@@ -111,30 +113,82 @@ const updateStatus = async (req, res) => {
     try {
         const { value } = req.body;
         const { id } = req.params;
+
         const deposit = await depositModel.findById(id);
         if (!deposit) {
             return res.status(404).json({ message: "Deposit not found" });
-        };
-        const currentStatus = deposit.status;
-        const amount = deposit.amount;
+        }
+
         const user = await userModel.findById(deposit.user);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
-        };
-        // console.log("fcm token ==> ", user.fcmTokens);
+        }
+
+        const currentStatus = deposit.status;
+        const amount = deposit.amount;
+
+        const allDeposits = await depositModel.find({ user: deposit.user });
+        const hasNonPending = allDeposits.some(dep => dep.status === "approved");
+        const isBonusEligible = !hasNonPending;
+
         if (value === "decline") {
             deposit.status = value;
-            // await sendCustomNotification('Deposit Declined ❌', `Your Deposit of ₹${amount} is Declined`, user?.fcmTokens);
         } else if (value === "approved" && currentStatus !== "approved") {
             const staff = await staffModel.findById(user.master);
             if (!staff || staff.wallet < amount) {
                 return res.status(400).json({ message: "Insufficient Balance in Wallet" });
-            };
-            user.wallet += amount;
-            await staffModel.findByIdAndUpdate(user.master, { $inc: { wallet: -amount } }, { new: true });
+            }
+
+            let finalAmount = amount;
+
+            if (isBonusEligible) {
+                console.log("------------ FIrst deposti bonus condition ----------")
+                const bonus = await bonusModel.findOne({
+                    master: user.master,
+                    admin: user.admin,
+                    bonusType: "joining",
+                    status: "active"
+                });
+
+                let bonusAmount = 0;
+
+                if (bonus) {
+                    if (bonus.bonusAmountType === "percentage") {
+                        bonusAmount = (amount / 100) * bonus.amount;
+                        finalAmount += bonusAmount;
+                    } else if (bonus.bonusAmountType === "INR") {
+                        bonusAmount = bonus.amount
+                        finalAmount += bonusAmount;
+                    }
+                }
+
+                await bonusLogModel.create({
+                    bonus: bonus._id,
+                    deposit:id,
+                    user: deposit.user,
+                    master: bonus.master,
+                    admin: bonus.admin,
+                    bonusTotalAmount: bonusAmount
+                })
+
+                console.log("Bonus Log created successfully ...")
+            }
+
+            user.wallet += finalAmount;
+
+            console.log("user updated wallet", user.wallet)
+
+            await staffModel.findByIdAndUpdate(
+                user.master,
+                { $inc: { wallet: -finalAmount } }, // only deduct actual deposit amount
+                { new: true }
+            );
+
             deposit.status = value;
-            // await sendCustomNotification('Deposit Approved ✅', `Your Deposit of ₹${amount} is Approved`, user?.fcmTokens);
-        };
+        }
+
+        console.log("deposit Amount: ", deposit.amount)
+
         await deposit.save();
         await user.save();
 
