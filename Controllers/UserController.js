@@ -580,7 +580,7 @@ const creditTrnsactionAPI = async (req, res) => {
         console.log("user wallet before CR = ", user.wallet)
         console.log("user CR before CR = ", user.creditTransaction)
 
-        if (!staff) {
+        if (!user) {
             return res.status(400).json({ status: 'fail', message: 'Id incorrect, user not found !!' })
         }
 
